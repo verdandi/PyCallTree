@@ -11,7 +11,7 @@ from file_parser import FileParser
 
 
 class FileParserTest(unittest.TestCase):
-    """Tests for class FaileParser."""
+    """Tests for class FileParser."""
 
     def test_should_ignore_file_if_it_is_not_source_file(self):
         """FileParser should ignore file if it is not source file."""
@@ -32,5 +32,7 @@ class FileParserTest(unittest.TestCase):
 
     def test_should_save_found_tokens(self):
         """FileParser should save found tokens."""
+
+        pass
 
 
