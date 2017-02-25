@@ -10,8 +10,9 @@ from . import tokens
 
 class FunctionDeclarationSearcher:
     def __init__(self):
-        self.__pattern = re.compile('^static \w+ \w+\(.*\);$|^\w+ \w+\(.*\);$')
+        self.__pattern = re.compile(r'^static \w+ (?P<token1>\w+)\(.*\);$|^\w+ (?P<token2>\w+)\(.*\);$')
         self.__found_token = ''
+        self.__token_name = ''
         self.__data_part = ''
 
     def findToken(self, line):
@@ -23,8 +24,10 @@ class FunctionDeclarationSearcher:
             return tokens.NOT_ENOUGH_DATA
 
         test_string = self.__data_part + line
-        if self.__pattern.match(test_string):
+        result = self.__pattern.match(test_string)
+        if result:
             self.__found_token = test_string
+            self.__token_name = result.group('token1') if result.groupdict()['token1'] else result.group('token2')
             self.__data_part = ''
             return tokens.FUNCTION_DECLARATION
         else:
@@ -33,4 +36,4 @@ class FunctionDeclarationSearcher:
 
     @property
     def found_token(self):
-        return self.__found_token
+        return self.__token_name, self.__found_token

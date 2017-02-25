@@ -25,15 +25,19 @@ class FunctionDeclarationSearcherTest(unittest.TestCase):
             line = example.readline()
             found_token = tokenizer.findToken(line.strip())
             self.assertEquals(tokens.FUNCTION_DECLARATION, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function134', short_name)
             self.assertEquals('int function134(int val1, double val2, char* double3, void(*)(char, int, double*, int(*)() );',
-                              tokenizer.found_token)
+                              full_name)
 
         with open('tests/function_declaration_example1', 'r') as example:
             line = example.readline()
             found_token = tokenizer.findToken(line.strip())
 
             self.assertEquals(tokens.FUNCTION_DECLARATION, found_token)
-            self.assertEquals(line.strip(), tokenizer.found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function', short_name)
+            self.assertEquals(line.strip(), full_name)
 
 
 if __name__ == '__main__':

@@ -22,9 +22,10 @@ class FileParser:
             for tokenizer in self.__tokenizers:
                 token = tokenizer.findToken(line.strip())
                 if token == tokens.FUNCTION_DECLARATION:
-                    self.__tokens_map.setdefault(
-                        tokenizer.found_token, {'declarations': [], 'definitions': []})['declarations'].append(
-                        file_name+':'+str(number))
+                    token_name, detailed_name = tokenizer.found_token
+                    new_token = self.__tokens_map.setdefault(token_name, {'detail': '', 'declarations': [], 'definitions': []})
+                    new_token['detail'] = detailed_name
+                    new_token['declarations'].append(file_name+':'+str(number))
 
     @property
     def tokens_map(self):

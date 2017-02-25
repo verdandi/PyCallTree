@@ -41,7 +41,8 @@ class FileParserTest(unittest.TestCase):
         parser.parse('./tests/header_example.h')
 
         tokens_map = parser.tokens_map
-        locations = tokens_map['int function134(int val1, double val2, char* double3, void(*)(char, int, double*, int(*)() );']
+        locations = tokens_map['function134']
+        self.assertEqual(locations['detail'],
+            'int function134(int val1, double val2, char* double3, void(*)(char, int, double*, int(*)() );')
         self.assertListEqual(locations['declarations'], ['./tests/header_example.h:11'])
         self.assertListEqual(locations['definitions'], [])
-
