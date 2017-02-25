@@ -40,11 +40,28 @@ class FunctionDeclarationSearcherTest(unittest.TestCase):
             self.assertEquals('function', short_name)
             self.assertEquals(line.strip(), full_name)
 
+    def test_can_clear_state(self):
+        """FunctionDeclarationSearcher can clear state if needed"""
+        tokenizer = FunctionDeclarationSearcher()
+
+
+        with open('tests/function_declaration_example2', 'r') as example:
+            for i in range(0,6):
+                line = example.readline()
+                found_token = tokenizer.findToken(line.strip())
+                self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
+
+            tokenizer.clear()
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.NOTHING_SPECIAL, found_token)
+
+
 class FunctionDefinitionSearcherTest(unittest.TestCase):
-    """Tests for class FunctionDeclarationSearcher"""
+    """Tests for class FunctionDefinitionSearcher"""
 
     def test_should_find_function_definition(self):
-        """FunctionDeclarationSearcher should find function definition in headers"""
+        """FunctionDefinitionSearcher should find function definition in headers"""
         tokenizer = FunctionDefinitionSearcher()
 
 
@@ -70,6 +87,23 @@ class FunctionDefinitionSearcherTest(unittest.TestCase):
             short_name, full_name = tokenizer.found_token
             self.assertEquals('function', short_name)
             self.assertEquals(line.strip(), full_name)
+
+    def test_can_clear_state(self):
+        """FunctionDefinitionSearcher can clear state if needed"""
+        tokenizer = FunctionDefinitionSearcher()
+
+
+        with open('tests/function_definition_example2', 'r') as example:
+            for i in range(0,6):
+                line = example.readline()
+                found_token = tokenizer.findToken(line.strip())
+                self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
+
+            tokenizer.clear()
+
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.NOTHING_SPECIAL, found_token)
 
 
 if __name__ == '__main__':
