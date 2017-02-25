@@ -16,3 +16,6 @@ class TokenizerMock:
     @property
     def received_strings(self):
         return self.__received_strings
+
+    def clear(self):
+        pass
