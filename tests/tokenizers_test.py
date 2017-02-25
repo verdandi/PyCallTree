@@ -7,6 +7,7 @@ import unittest
 
 from tokenizers.function import FunctionDeclarationSearcher
 from tokenizers.function import FunctionDefinitionSearcher
+from tokenizers.directives import IncludeSearcher
 from tokenizers.function import tokens
 
 class FunctionDeclarationSearcherTest(unittest.TestCase):
@@ -104,6 +105,47 @@ class FunctionDefinitionSearcherTest(unittest.TestCase):
             line = example.readline()
             found_token = tokenizer.findToken(line.strip())
             self.assertEquals(tokens.NOTHING_SPECIAL, found_token)
+
+class IncludeSearcherTest(unittest.TestCase):
+    """Tests for class IncludeSearcher"""
+
+    def test_should_find_include_directives(self):
+        """IncludeSearcher should find include directives"""
+        tokenizer = IncludeSearcher()
+
+
+        with open('tests/include_example', 'r') as example:
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.INCLUDE_DIRECTIVE, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('stdio.h', short_name)
+            self.assertEquals('#include <stdio.h>', full_name)
+
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.INCLUDE_DIRECTIVE, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('some_path/some_file.c', short_name)
+            self.assertEquals('#include "some_path/some_file.c"', full_name)
+
+    # def test_can_clear_state(self):
+        # """FunctionDefinitionSearcher can clear state if needed"""
+        # tokenizer = FunctionDefinitionSearcher()
+
+
+        # with open('tests/function_definition_example2', 'r') as example:
+            # for i in range(0,6):
+                # line = example.readline()
+                # found_token = tokenizer.findToken(line.strip())
+                # self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
+
+            # tokenizer.clear()
+
+            # line = example.readline()
+            # found_token = tokenizer.findToken(line.strip())
+            # self.assertEquals(tokens.NOTHING_SPECIAL, found_token)
+
 
 
 if __name__ == '__main__':
