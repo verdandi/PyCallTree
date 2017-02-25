@@ -9,6 +9,7 @@ from tokenizers.function import FunctionDeclarationSearcher
 from tokenizers.function import FunctionDefinitionSearcher
 from tokenizers.directives import IncludeSearcher
 from tokenizers.directives import MacrosSearcher
+from tokenizers.comments import CommentSearcher
 from tokenizers.function import tokens
 
 
@@ -170,6 +171,46 @@ class MacrosSearcherTest(unittest.TestCase):
 
         with open('tests/macros_example1', 'r') as example:
             for i in range(0,2):
+                line = example.readline()
+                found_token = tokenizer.findToken(line.strip())
+                self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
+
+            tokenizer.clear()
+
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.NOTHING_SPECIAL, found_token)
+
+class CommentSearcherTest(unittest.TestCase):
+    """Tests for class CommentSearcher"""
+
+    def test_should_find_comments(self):
+        """MacrosSearcher should find comments"""
+
+        tokenizer = CommentSearcher()
+
+        with open('tests/multiline_comment_example', 'r') as example:
+            for i in range(0,3):
+                line = example.readline()
+                found_token = tokenizer.findToken(line.strip())
+                self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
+
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.MULTILINE_COMMENT, found_token)
+
+        with open('tests/one_line_comment_example', 'r') as example:
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.ONELINE_COMMENT, found_token)
+
+    def test_can_clear_state(self):
+        """CommentSearcher can clear state if needed"""
+
+        tokenizer = CommentSearcher()
+
+        with open('tests/multiline_comment_example', 'r') as example:
+            for i in range(0,3):
                 line = example.readline()
                 found_token = tokenizer.findToken(line.strip())
                 self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
