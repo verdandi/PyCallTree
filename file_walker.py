@@ -24,7 +24,14 @@ class FileWalker:
     def __next__(self):
         while not self.__found_files:
             self.__current_dir, self.__found_dirs, self.__found_files = next(self.__walker)
-            self.__current_dir = self.__current_dir.replace(self.__root, '.')
+            if self.__current_dir == self.__root:
+                self.__current_dir = ''
+            else:
+                self.__current_dir = self.__current_dir.replace(self.__root+'/', '')
             self.__found_files = deque(self.__found_files)
 
-        return self.__current_dir + '/' + self.__found_files.popleft()
+        found_file = self.__found_files.popleft();
+        if not self.__current_dir:
+            return found_file
+        else:
+            return self.__current_dir + '/' + found_file

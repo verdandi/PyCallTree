@@ -13,9 +13,10 @@ class FileWalkerTest(unittest.TestCase):
     def test_should_find_all_files_in_directory(self):
         """FileWalker should find all files in given directory"""
 
-        files = ['./file1', './dir1/file2', './dir1/file3', './dir1/dir2/file4', './dir1/dir3/file5', './dir1/dir3/file6']
+        files = ['file1', 'dir1/file2', 'dir1/file3', 'dir1/dir2/file4', 'dir1/dir3/file5', 'dir1/dir3/file6']
         found_files = []
         for file_name in FileWalker('tests/dir_tree_example'):
             found_files.append(file_name)
 
+        print('found_files: ', found_files)
         self.assertListEqual(found_files, files)
