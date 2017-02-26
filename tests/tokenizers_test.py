@@ -97,7 +97,6 @@ class FunctionDefinitionSearcherTest(unittest.TestCase):
         """FunctionDefinitionSearcher can clear state if needed"""
         tokenizer = FunctionDefinitionSearcher()
 
-
         with open('tests/function_definition_example2', 'r') as example:
             for i in range(0,6):
                 line = example.readline()

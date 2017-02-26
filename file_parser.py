@@ -19,6 +19,10 @@ class FileParser:
             return
 
         for number, line in enumerate(open(full_path, 'r'), start = 1):
+            # we try to skip ends of functions or some expressions
+            if line == '}\n' or line.find("#ifdef") >= 0 or line.find("#endif") >= 0:
+                continue
+
             for tokenizer in self.__tokenizers:
                 token = tokenizer.findToken(line.strip())
                 if token == tokens.FUNCTION_DECLARATION:
