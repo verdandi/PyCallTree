@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+
+# developed by: Kuksov Pavel
+# e-mail: aimed.fire@gmail.com
+
+
+from optparse import OptionParser
+import os
+from collections import deque
+
+from file_walker import FileWalker
+from file_parser import FileParser
+from tokenizers import function
+from tokenizers import directives
+from tokenizers import comments
+from tokenizers import tokens
+
+from tests import runner
+
+def parseFunctionDefinition(symbols_map, call_tree, level = 0, root = ''):
+    """This function parses function declaration and find all calls in it"""
+
+    symbol_description = call_tree[-1]
+    definition = symbol_description['definition']
+    path, line_number = definition.split(":")
+    line_number = int(line_number)
+    full_path = root + '/' + path if root else path
+    number_of_opened_brackets = 1
+    with open(full_path, 'r') as source_file:
+        function_call_searcher = function.FunctionCallSearcher()
+        comment_searcher = comments.CommentSearcher()
+        for current_number, line in enumerate(source_file, start=1):
+            if current_number <= line_number:
+                continue
+
+            if line.find('{') >= 0:
+                number_of_opened_brackets += 1
+
+            if line.find('}') >= 0:
+                number_of_opened_brackets -= 1
+
+            if number_of_opened_brackets == 0:
+                return
+
+            stripped_line = line.strip()
+            found_token = comment_searcher.findToken(stripped_line)
+            if found_token == tokens.NOT_ENOUGH_DATA:
+                continue
+
+            if found_token == tokens.ONELINE_COMMENT or found_token == tokens.MULTILINE_COMMENT:
+                continue
+
+            found_token = function_call_searcher.findToken(stripped_line)
+            if found_token != tokens.FUNCTION_CALL:
+                continue
+
+            token_name, full_name = function_call_searcher.found_token
+            if token_name not in symbols_map.keys():
+                call_tree.append({'level': level+1, 'symbol': token_name, 'detail': full_name,
+                                  'declaration': [], 'definition': ''})
+                continue
+
+            next_symbol = symbols_map[token_name]
+            if not next_symbol['definitions']:
+                call_tree.append({'level': level+1, 'symbol': token_name, 'detail': next_symbol['detail'],
+                                  'declaration': next_symbol['declarations'], 'definition': ''})
+                continue
+
+            definition = next_symbol['definitions'][0]
+            if len(next_symbol['definitions']) > 1:
+                explanation = "function '" + full_name
+                explanation += "' has few definitions, please enter the number of desired definition:\n"
+                for number, definition in enumerate(next_symbol['definitions'], start = 1):
+                    explanation += "  " + str(number) + ") " + definition + "\n"
+                explanation += "\n"
+
+                entered_number = 1
+                while True:
+                    entered_number = int(input(explanation))
+                    if entered_number >= 1  and entered_number <= len(next_symbol['definitions']):
+                        break
+
+                declaration = next_symbol['definitions'][entered_number-1]
+
+            call_tree.append({'level': level+1, 'symbol': token_name, 'detail': next_symbol['detail'],
+                              'declaration': next_symbol['declarations'], 'definition': definition})
+            parseFunctionDefinition(symbols_map, call_tree, level = level+1, root = root)
+
+def createCallTree(start_symbol, symbols_map, root_directory = ''):
+    """This function creates forward call tree from 'start_symbol' using 'symbols_map'"""
+
+    if start_symbol not in symbols_map.keys():
+        print("Symbol not found in source code. If you believe that is not truth then you can try to communicate with developer")
+        return
+
+    symbol_description = symbols_map[start_symbol]
+    if not symbol_description['definitions']:
+        print("Symbol '", start_symbol, "' does not have declarations")
+        return
+
+    full_name = symbol_description['detail']
+    definition = symbol_description['definitions'][0]
+    if len(symbol_description['definitions']) > 1:
+        explanation = "function '" + full_name + "' has few definitions, please enter the number of desired definition:\n"
+        for number, definition in enumerate(symbol_description['definitions'], start = 1):
+            explanation += "  " + str(number) + ") " + definition + "\n"
+        explanation += "\n"
+
+        entered_number = 1
+        while True:
+            entered_number = int(input(explanation))
+            if entered_number >= 1  and entered_number <= len(symbol_description['definitions']):
+                break
+
+        definition = symbol_description['definitions'][entered_number-1]
+
+    call_tree = deque()
+    call_tree.append({'level': 0, 'symbol': start_symbol, 'detail': full_name,
+                        'declaration': symbol_description['declarations'], 'definition': definition})
+
+    parseFunctionDefinition(symbols_map, call_tree, root = root_directory)
+    level_pointer = "--"
+    for symbol in call_tree:
+        current_level_pointer = level_pointer * symbol['level']
+        print(current_level_pointer,"/ ",symbol['symbol'],'()',symbol['definition'])
+
+def main():
+    usage = "usage: %prog <--source-dir <some/dir>> <--symbol <some_symbol>>"
+    option_parser = OptionParser(usage)
+    option_parser.add_option('-s', '--source-dir', dest="source_dir", help="Root directory with source code")
+    option_parser.add_option('-S', '--symbol', dest="symbol", help="Symbol (function name) which is should be start of call tree")
+    option_parser.add_option('-t', '--test', dest="is_run_tests", action = "store_true", default = False,
+         help="Run unit tests (if this option are defined all other options will be ignored")
+
+    options, args = option_parser.parse_args()
+    if options.is_run_tests:
+        runner.run_tests()
+    else:
+        root = options.source_dir
+
+        if not rootions:
+            option_parser.error("neccessary argument '--source-dir' not defined")
+
+        file_parser = FileParser([function.FunctionDeclarationSearcher(),
+                                  function.FunctionDefinitionSearcher(),
+                                  directives.IncludeSearcher(),
+                                  directives.MacrosSearcher(),
+                                  comments.CommentSearcher()])
+        for file_name in FileWalker(root):
+            file_parser.parse(file_name, root_directory = root)
+
+        createCallTree(options.symbol, file_parser.tokens_map, root_directory = root)
+
+
+if __name__ == '__main__':
+    main()
