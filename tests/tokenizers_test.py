@@ -7,10 +7,11 @@ import unittest
 
 from tokenizers.function import FunctionDeclarationSearcher
 from tokenizers.function import FunctionDefinitionSearcher
+from tokenizers.function import FunctionCallSearcher
 from tokenizers.directives import IncludeSearcher
 from tokenizers.directives import MacrosSearcher
 from tokenizers.comments import CommentSearcher
-from tokenizers.function import tokens
+from tokenizers import tokens
 
 
 class FunctionDeclarationSearcherTest(unittest.TestCase):
@@ -220,6 +221,79 @@ class CommentSearcherTest(unittest.TestCase):
             line = example.readline()
             found_token = tokenizer.findToken(line.strip())
             self.assertEquals(tokens.NOTHING_SPECIAL, found_token)
+
+
+class FunctionCallSearcherTest(unittest.TestCase):
+    """Tests for class FunctionCallSearcher"""
+
+    def test_should_find_function_calls(self):
+        """FunctionCallSearcher should find function calls"""
+
+        tokenizer = FunctionCallSearcher()
+
+        with open('tests/function_call_example1', 'r') as example:
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.FUNCTION_CALL, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function1', short_name)
+            self.assertEquals(line.strip(), full_name)
+
+        with open('tests/function_call_example2', 'r') as example:
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.FUNCTION_CALL, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function2', short_name)
+            self.assertEquals(line.strip(), full_name)
+
+        with open('tests/function_call_example3', 'r') as example:
+            for i in range(0,2):
+                line = example.readline()
+                found_token = tokenizer.findToken(line.strip())
+                self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
+
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.FUNCTION_CALL, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function3', short_name)
+            self.assertEquals('int val = function3( 5, "some string");', full_name)
+
+        with open('tests/function_call_example4', 'r') as example:
+            for i in range(0,5):
+                line = example.readline()
+                found_token = tokenizer.findToken(line.strip())
+                self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
+
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.FUNCTION_CALL, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function4', short_name)
+            self.assertEquals(' function4(val1, val2, val3 ) ){', full_name)
+
+
+    def test_can_check_the_same_line_after_found_call(self):
+        """FunctionCallSearcher can check the same line after found call"""
+
+        tokenizer = FunctionCallSearcher()
+
+        with open('tests/function_call_example5', 'r') as example:
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.FUNCTION_CALL, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function5', short_name)
+            self.assertEquals(line.strip(), full_name)
+
+            the_same_line = line.strip()
+            the_same_line = the_same_line[the_same_line.find('(')+1:]
+            found_token = tokenizer.findToken(the_same_line)
+            self.assertEquals(tokens.FUNCTION_CALL, found_token)
+            short_name, full_name = tokenizer.found_token
+            self.assertEquals('function6', short_name)
+            tokenizer.clear()
 
 
 if __name__ == '__main__':

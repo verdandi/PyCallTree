@@ -1,0 +1,8 @@
+    if (
+            function4(val1,
+                         val2, val3
+                )
+       )
+{
+    return 0;
+}

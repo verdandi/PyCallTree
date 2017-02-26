@@ -1,0 +1,3 @@
+    int val = function3(
+            5, "some string"
+            );
