@@ -10,13 +10,14 @@ from . import tokens
 
 class FunctionDeclarationSearcher:
     def __init__(self):
-        self.__pattern = re.compile(r'^static \w+ (?P<token1>\w+)\(.*\) *;$|^\w+ (?P<token2>\w+)\(.*\) *;$')
+        self.__pattern = re.compile(
+            r'^static \w+\*{0,2} \*{0,2}(?P<token1>\w+)\(.*\) *;.*$|^\w+\*{0,2} \*{0,2}(?P<token2>\w+)\(.*\) *;.*$')
         self.__found_token = ''
         self.__token_name = ''
         self.__data_part = ''
 
     def findToken(self, line):
-        if not line.endswith(';'):
+        if line.find(';') == -1:
             if not self.__data_part:
                 self.__data_part = line
             else:
@@ -43,13 +44,14 @@ class FunctionDeclarationSearcher:
 
 class FunctionDefinitionSearcher:
     def __init__(self):
-        self.__pattern = re.compile(r'^static \w+ (?P<token1>\w+)\(.*\) *{$|^\w+ (?P<token2>\w+)\(.*\) *{$')
+        self.__pattern = re.compile(
+            r'^static \w+\*{0,2} \*{0,2}(?P<token1>\w+)\(.*\) *{.*$|^\w+\*{0,2} \*{0,2}(?P<token2>\w+)\(.*\) *{.*$')
         self.__found_token = ''
         self.__token_name = ''
         self.__data_part = ''
 
     def findToken(self, line):
-        if not line.endswith('{'):
+        if line.find('{') == -1:
             if not self.__data_part:
                 self.__data_part = line
             else:
@@ -79,7 +81,7 @@ class FunctionCallSearcher:
     key_words = ('if', 'switch', 'while', 'for')
 
     def __init__(self):
-        self.__pattern = re.compile(r'^ *(?P<token1>\w+)\(.*\) *\)*[{;]$|^.*[,=] *(?P<token2>\w+)\(.*\) *\)*[{;]$')
+        self.__pattern = re.compile(r'^ *(?P<token1>\w+) *\(.*\) *\)*[{;].*$|^.*[,=] *(?P<token2>\w+) *\(.*\) *\)*[{;].*$')
         self.__found_token = ''
         self.__token_name = ''
         self.__data_part = ''
@@ -99,7 +101,8 @@ class FunctionCallSearcher:
         return line[position_of_bracket_after_key_word+1:]
 
     def findToken(self, line):
-        if not line.endswith('{') and not line.endswith(';'):
+        print("++++ ", self.__data_part)
+        if line.find('{') == -1 and line.find(';') == -1:
             if not self.__data_part:
                 self.__data_part = line
             else:
@@ -107,6 +110,7 @@ class FunctionCallSearcher:
             return tokens.NOT_ENOUGH_DATA
 
         test_string = self.excludeKeyWords(self.__data_part + line)
+        print("++++ ", test_string)
 
         result = self.__pattern.match(test_string)
         if result:
@@ -118,22 +122,9 @@ class FunctionCallSearcher:
             self.__data_part = ''
             return tokens.NOTHING_SPECIAL
 
-    # def checkOneMoreTime(self):
-        # print("\n---- ", self.__found_token)
-        # result = self.__pattern.match(self.__found_token)
-        # if result:
-            # self.__token_name = result.group('token1') if result.groupdict()['token1'] else result.group('token2')
-            # return tokens.FUNCTION_CALL
-        # else:
-            # return tokens.NOTHING_SPECIAL
-
     def clear(self):
         self.__data_part = ''
 
     @property
     def found_token(self):
-        # found_token_name = self.__token_name
-        # full_string = self.__found_token
-        # self.__found_token = self.__found_token[self.__found_token.find('(')+1:]
-        # return found_token_name, full_string
         return self.__token_name, self.__found_token

@@ -8,7 +8,7 @@ function134(int val1,
         char* double3,
         void(*)(char, int, double*, int(*)()
             )
-        ;
+        ; /* some comment */
 
 struct MyStruct {
     int v_;
