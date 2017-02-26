@@ -8,12 +8,12 @@ from optparse import OptionParser
 import os
 from collections import deque
 
-from file_walker import FileWalker
-from file_parser import FileParser
 from tokenizers import function
 from tokenizers import directives
 from tokenizers import comments
 from tokenizers import tokens
+from main import FileWalker
+from main import FileParser
 
 from tests import runner
 
@@ -138,7 +138,7 @@ def main():
     else:
         root = options.source_dir
 
-        if not rootions:
+        if not root:
             option_parser.error("neccessary argument '--source-dir' not defined")
 
         file_parser = FileParser([function.FunctionDeclarationSearcher(),
@@ -149,6 +149,7 @@ def main():
         for file_name in FileWalker(root):
             file_parser.parse(file_name, root_directory = root)
 
+        print("found " + str(len(file_parser.tokens_map)) + " symbols")
         createCallTree(options.symbol, file_parser.tokens_map, root_directory = root)
 
 

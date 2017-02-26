@@ -7,10 +7,11 @@
 import unittest
 
 from . import tokenizer_mock
-from file_parser import FileParser
 from tokenizers import function
 from tokenizers import directives
 from tokenizers import comments
+
+from main import FileParser
 
 
 class FileParserTest(unittest.TestCase):

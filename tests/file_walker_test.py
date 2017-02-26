@@ -5,7 +5,7 @@
 
 import unittest
 
-from file_walker import FileWalker
+from main import FileWalker
 
 class FileWalkerTest(unittest.TestCase):
     """Tests for class FileWalker"""
