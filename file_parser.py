@@ -26,6 +26,34 @@ class FileParser:
                     new_token = self.__tokens_map.setdefault(token_name, {'detail': '', 'declarations': [], 'definitions': []})
                     new_token['detail'] = detailed_name
                     new_token['declarations'].append(file_name+':'+str(number))
+                    self.clearTokenizers()
+
+                if token == tokens.FUNCTION_DEFINITION:
+                    token_name, detailed_name = tokenizer.found_token
+                    new_token = self.__tokens_map.setdefault(token_name, {'detail': '', 'declarations': [], 'definitions': []})
+                    if not new_token['detail']:
+                        new_token['detail'] = detailed_name
+
+                    new_token['definitions'].append(file_name+':'+str(number))
+                    self.clearTokenizers()
+
+                if token == tokens.INCLUDE_DIRECTIVE:
+                    self.clearTokenizers()
+
+                if token == tokens.MACROS:
+                    self.clearTokenizers()
+
+                if token == tokens.ONELINE_COMMENT:
+                    self.clearTokenizers()
+
+                if token == tokens.MULTILINE_COMMENT:
+                    self.clearTokenizers()
+
+        self.clearTokenizers()
+
+    def clearTokenizers(self):
+        for tokenizer in self.__tokenizers:
+            tokenizer.clear()
 
     @property
     def tokens_map(self):

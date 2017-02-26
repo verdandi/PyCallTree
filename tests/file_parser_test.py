@@ -9,6 +9,8 @@ import unittest
 from . import tokenizer_mock
 from file_parser import FileParser
 from tokenizers import function
+from tokenizers import directives
+from tokenizers import comments
 
 
 class FileParserTest(unittest.TestCase):
@@ -34,15 +36,20 @@ class FileParserTest(unittest.TestCase):
     def test_should_save_found_tokens(self):
         """FileParser should save found tokens."""
 
-        tokenizer = function.FunctionDeclarationSearcher()
-        tokenizers = [tokenizer]
+        tokenizer1 = function.FunctionDeclarationSearcher()
+        tokenizer2 = function.FunctionDefinitionSearcher()
+        tokenizer3 = directives.IncludeSearcher()
+        tokenizer4 = directives.MacrosSearcher()
+        tokenizer5 = comments.CommentSearcher()
+        tokenizers = [tokenizer1, tokenizer2, tokenizer3, tokenizer4, tokenizer5]
         parser = FileParser(tokenizers)
 
         parser.parse('./tests/header_example.h')
+        parser.parse('./tests/source_example.c')
 
         tokens_map = parser.tokens_map
         locations = tokens_map['function134']
         self.assertEqual(locations['detail'],
             'int function134(int val1, double val2, char* double3, void(*)(char, int, double*, int(*)() );')
         self.assertListEqual(locations['declarations'], ['./tests/header_example.h:11'])
-        self.assertListEqual(locations['definitions'], [])
+        self.assertListEqual(locations['definitions'], ['./tests/source_example.c:9'])

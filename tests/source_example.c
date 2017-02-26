@@ -1,0 +1,14 @@
+#include "header_example.h"
+
+int
+function134(int val1,
+        double val2,
+        char* double3,
+        void(*)(char, int, double*, int(*)()
+            )
+        {
+    if ( val2 == 0 ) {
+        return 0;
+    }
+
+}
