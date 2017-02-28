@@ -18,8 +18,11 @@ class CommentSearcher:
             return tokens.ONELINE_COMMENT
 
         if not self.__is_multiline_comment_found and line.startswith('/*'):
-            self.__is_multiline_comment_found = True
-            return tokens.NOT_ENOUGH_DATA
+            if line.endswith('*/'):
+                return tokens.MULTILINE_COMMENT
+            else:
+                self.__is_multiline_comment_found = True
+                return tokens.NOT_ENOUGH_DATA
 
         if self.__is_multiline_comment_found and not line.endswith('*/'):
             return tokens.NOT_ENOUGH_DATA

@@ -19,3 +19,9 @@ class FileWalkerTest(unittest.TestCase):
             found_files.append(file_name)
 
         self.assertListEqual(found_files, files)
+
+        found_files = []
+        for file_name in FileWalker('tests/dir_tree_example/'):
+            found_files.append(file_name)
+
+        self.assertListEqual(found_files, files)

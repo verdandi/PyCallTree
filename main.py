@@ -13,7 +13,7 @@ class FileWalker:
     """Class FileWalker recursivelly finds all files in given dir and all subdirs"""
 
     def __init__(self, root):
-        self.__root = root
+        self.__root = root[:len(root)-1] if root.endswith('/') else root
         self.__walker = os.walk(root)
         self.__current_dir = root
         self.__found_dirs = []
@@ -52,8 +52,9 @@ class FileParser:
 
         for number, line in enumerate(open(full_path, 'r'), start = 1):
             # we try to skip ends of functions or some expressions
-            if (line == '}\n' or line.find("#ifdef") >= 0 or
-                line.find("#endif") >= 0 or line.find("#if") >= 0 or line.find("#else") >= 0):
+            if (line.strip() == '}' or (line.startswith('#') and (line.find("ifdef") >= 0 or
+                line.find("endif") >= 0 or line.find("if") >= 0 or line.find("else") >= 0 or
+                line.find("undef") >= 0))):
                 continue
 
             for tokenizer in self.__tokenizers:

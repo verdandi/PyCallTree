@@ -189,12 +189,17 @@ class CommentSearcherTest(unittest.TestCase):
 
         tokenizer = CommentSearcher()
 
-        with open('tests/multiline_comment_example', 'r') as example:
+        with open('tests/multiline_comment_example1', 'r') as example:
             for i in range(0,3):
                 line = example.readline()
                 found_token = tokenizer.findToken(line.strip())
                 self.assertEquals(tokens.NOT_ENOUGH_DATA, found_token)
 
+            line = example.readline()
+            found_token = tokenizer.findToken(line.strip())
+            self.assertEquals(tokens.MULTILINE_COMMENT, found_token)
+
+        with open('tests/multiline_comment_example2', 'r') as example:
             line = example.readline()
             found_token = tokenizer.findToken(line.strip())
             self.assertEquals(tokens.MULTILINE_COMMENT, found_token)
@@ -209,7 +214,7 @@ class CommentSearcherTest(unittest.TestCase):
 
         tokenizer = CommentSearcher()
 
-        with open('tests/multiline_comment_example', 'r') as example:
+        with open('tests/multiline_comment_example1', 'r') as example:
             for i in range(0,3):
                 line = example.readline()
                 found_token = tokenizer.findToken(line.strip())

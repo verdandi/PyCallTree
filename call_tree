@@ -17,7 +17,7 @@ from main import FileParser
 
 from tests import runner
 
-def parseFunctionDefinition(symbols_map, call_tree, level = 0, root = ''):
+def parseFunctionDefinition(symbols_map, excluded, call_tree, level = 0, root = ''):
     """This function parses function declaration and find all calls in it"""
 
     symbol_description = call_tree[-1]
@@ -42,6 +42,11 @@ def parseFunctionDefinition(symbols_map, call_tree, level = 0, root = ''):
             if number_of_opened_brackets == 0:
                 return
 
+            if (line.strip() == '}' or line.strip().endswith(':') or (line.startswith('#') and (line.find("ifdef") >= 0 or
+                line.find("endif") >= 0 or line.find("if") >= 0 or line.find("else") >= 0 or
+                line.find("undef") >= 0 or line.find("define") >= 0))):
+                continue
+
             stripped_line = line.strip()
             found_token = comment_searcher.findToken(stripped_line)
             if found_token == tokens.NOT_ENOUGH_DATA:
@@ -55,6 +60,9 @@ def parseFunctionDefinition(symbols_map, call_tree, level = 0, root = ''):
                 continue
 
             token_name, full_name = function_call_searcher.found_token
+            if token_name in excluded:
+                continue
+
             if token_name not in symbols_map.keys():
                 call_tree.append({'level': level+1, 'symbol': token_name, 'detail': full_name,
                                   'declaration': [], 'definition': ''})
@@ -84,9 +92,9 @@ def parseFunctionDefinition(symbols_map, call_tree, level = 0, root = ''):
 
             call_tree.append({'level': level+1, 'symbol': token_name, 'detail': next_symbol['detail'],
                               'declaration': next_symbol['declarations'], 'definition': definition})
-            parseFunctionDefinition(symbols_map, call_tree, level = level+1, root = root)
+            parseFunctionDefinition(symbols_map, excluded, call_tree, level = level+1, root = root)
 
-def createCallTree(start_symbol, symbols_map, root_directory = ''):
+def createCallTree(start_symbol, excluded, symbols_map, root_directory = ''):
     """This function creates forward call tree from 'start_symbol' using 'symbols_map'"""
 
     if start_symbol not in symbols_map.keys():
@@ -118,17 +126,18 @@ def createCallTree(start_symbol, symbols_map, root_directory = ''):
     call_tree.append({'level': 0, 'symbol': start_symbol, 'detail': full_name,
                         'declaration': symbol_description['declarations'], 'definition': definition})
 
-    parseFunctionDefinition(symbols_map, call_tree, root = root_directory)
+    parseFunctionDefinition(symbols_map, excluded, call_tree, root = root_directory)
     level_pointer = "--"
     for symbol in call_tree:
         current_level_pointer = level_pointer * symbol['level']
         print(current_level_pointer,"/ ",symbol['symbol'],'()',symbol['definition'])
 
 def main():
-    usage = "usage: %prog <--source-dir <some/dir>> <--symbol <some_symbol>>"
+    usage = "usage: %prog <--source-dir <some/dir>> <--symbol <some_symbol>> [--exclude \"some_symbol1 some_symbol2\"]"
     option_parser = OptionParser(usage)
     option_parser.add_option('-s', '--source-dir', dest="source_dir", help="Root directory with source code")
     option_parser.add_option('-S', '--symbol', dest="symbol", help="Symbol (function name) which is should be start of call tree")
+    option_parser.add_option('-e', '--exclude', dest="excluded_symbols", help="Symbols which should be excluded")
     option_parser.add_option('-t', '--test', dest="is_run_tests", action = "store_true", default = False,
          help="Run unit tests (if this option are defined all other options will be ignored")
 
@@ -137,9 +146,13 @@ def main():
         runner.run_tests()
     else:
         root = options.source_dir
+        symbol = options.symbol
 
         if not root:
             option_parser.error("neccessary argument '--source-dir' not defined")
+
+        if not symbol:
+            option_parser.error("neccessary argument '--symbol' not defined")
 
         file_parser = FileParser([function.FunctionDeclarationSearcher(),
                                   function.FunctionDefinitionSearcher(),
@@ -149,8 +162,13 @@ def main():
         for file_name in FileWalker(root):
             file_parser.parse(file_name, root_directory = root)
 
+        # for k,v in file_parser.tokens_map.items():
+            # print(k, v)
+
         print("found " + str(len(file_parser.tokens_map)) + " symbols")
-        createCallTree(options.symbol, file_parser.tokens_map, root_directory = root)
+
+        excluded = options.excluded_symbols.split()
+        createCallTree(symbol, excluded, file_parser.tokens_map, root_directory = root)
 
 
 if __name__ == '__main__':
