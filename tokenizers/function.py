@@ -104,10 +104,6 @@ class FunctionCallSearcher:
         return line[position_of_bracket_after_key_word+1:]
 
     def findToken(self, line):
-        if line.find("bzero") >= 0:
-            print("---- ", line);
-            print("++++ ", self.__data_part);
-
         if line.find('{') == -1 and line.find(';') == -1:
             if not self.__data_part:
                 self.__data_part = line
