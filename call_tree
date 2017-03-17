@@ -17,8 +17,33 @@ from main import FileParser
 
 from tests import runner
 
-def parseFunctionDefinition(symbols_map, excluded, call_tree, level = 0, root = ''):
+def askUserAboutDefinition(symbol, definitions):
+    explanation = "function '" + symbol + "' has few definitions, please enter the number of desired definition:\n"
+    for number, definition in enumerate(definitions, start = 1):
+        explanation += "  " + str(number) + ") " + definition + "\n"
+    explanation += "\n"
+
+    entered_number = ''
+    while True:
+        entered_number = input(explanation)
+        if not entered_number.isdigit():
+            print('Please enter a number')
+            continue
+
+        entered_number = int(entered_number)
+
+        if entered_number >= 1  and entered_number <= len(definitions):
+            break
+
+    print('Your choice: '+ definitions[entered_number-1])
+    return definitions[entered_number-1]
+
+
+def parseFunctionDefinition(symbols_map, excluded, call_tree, level, max_level, root = ''):
     """This function parses function declaration and find all calls in it"""
+
+    if level >= max_level:
+        return
 
     symbol_description = call_tree[-1]
     definition = symbol_description['definition']
@@ -30,17 +55,13 @@ def parseFunctionDefinition(symbols_map, excluded, call_tree, level = 0, root = 
         function_call_searcher = function.FunctionCallSearcher()
         comment_searcher = comments.CommentSearcher()
         for current_number, line in enumerate(source_file, start=1):
-            if current_number <= line_number:
-                continue
+            if current_number <= line_number: continue
 
-            if line.find('{') >= 0:
-                number_of_opened_brackets += 1
+            if line.find('{') >= 0: number_of_opened_brackets += 1
 
-            if line.find('}') >= 0:
-                number_of_opened_brackets -= 1
+            if line.find('}') >= 0: number_of_opened_brackets -= 1
 
-            if number_of_opened_brackets == 0:
-                return
+            if number_of_opened_brackets == 0: return
 
             if (line.strip() == '}' or line.strip().endswith(':') or (line.startswith('#') and (line.find("ifdef") >= 0 or
                 line.find("endif") >= 0 or line.find("if") >= 0 or line.find("else") >= 0 or
@@ -49,19 +70,15 @@ def parseFunctionDefinition(symbols_map, excluded, call_tree, level = 0, root = 
 
             stripped_line = line.strip()
             found_token = comment_searcher.findToken(stripped_line)
-            if found_token == tokens.NOT_ENOUGH_DATA:
-                continue
+            if found_token == tokens.NOT_ENOUGH_DATA: continue
 
-            if found_token == tokens.ONELINE_COMMENT or found_token == tokens.MULTILINE_COMMENT:
-                continue
+            if found_token == tokens.ONELINE_COMMENT or found_token == tokens.MULTILINE_COMMENT: continue
 
             found_token = function_call_searcher.findToken(stripped_line)
-            if found_token != tokens.FUNCTION_CALL:
-                continue
+            if found_token != tokens.FUNCTION_CALL: continue
 
             token_name, full_name = function_call_searcher.found_token
-            if token_name in excluded:
-                continue
+            if token_name in excluded: continue
 
             if token_name not in symbols_map.keys():
                 call_tree.append({'level': level+1, 'symbol': token_name, 'detail': full_name,
@@ -76,25 +93,14 @@ def parseFunctionDefinition(symbols_map, excluded, call_tree, level = 0, root = 
 
             definition = next_symbol['definitions'][0]
             if len(next_symbol['definitions']) > 1:
-                explanation = "function '" + full_name
-                explanation += "' has few definitions, please enter the number of desired definition:\n"
-                for number, definition in enumerate(next_symbol['definitions'], start = 1):
-                    explanation += "  " + str(number) + ") " + definition + "\n"
-                explanation += "\n"
-
-                entered_number = 1
-                while True:
-                    entered_number = int(input(explanation))
-                    if entered_number >= 1  and entered_number <= len(next_symbol['definitions']):
-                        break
-
-                declaration = next_symbol['definitions'][entered_number-1]
+                definition = askUserAboutDefinition(token_name, next_symbol['definitions'])
 
             call_tree.append({'level': level+1, 'symbol': token_name, 'detail': next_symbol['detail'],
                               'declaration': next_symbol['declarations'], 'definition': definition})
-            parseFunctionDefinition(symbols_map, excluded, call_tree, level = level+1, root = root)
 
-def createCallTree(start_symbol, excluded, symbols_map, root_directory = ''):
+            parseFunctionDefinition(symbols_map, excluded, call_tree, level+1, max_level, root = root)
+
+def createCallTree(start_symbol, excluded, call_level, symbols_map, root_directory = ''):
     """This function creates forward call tree from 'start_symbol' using 'symbols_map'"""
 
     if start_symbol not in symbols_map.keys():
@@ -109,24 +115,14 @@ def createCallTree(start_symbol, excluded, symbols_map, root_directory = ''):
     full_name = symbol_description['detail']
     definition = symbol_description['definitions'][0]
     if len(symbol_description['definitions']) > 1:
-        explanation = "function '" + full_name + "' has few definitions, please enter the number of desired definition:\n"
-        for number, definition in enumerate(symbol_description['definitions'], start = 1):
-            explanation += "  " + str(number) + ") " + definition + "\n"
-        explanation += "\n"
-
-        entered_number = 1
-        while True:
-            entered_number = int(input(explanation))
-            if entered_number >= 1  and entered_number <= len(symbol_description['definitions']):
-                break
-
-        definition = symbol_description['definitions'][entered_number-1]
+        definition = askUserAboutDefinition(start_symbol, symbol_description['definitions'])
 
     call_tree = deque()
     call_tree.append({'level': 0, 'symbol': start_symbol, 'detail': full_name,
                         'declaration': symbol_description['declarations'], 'definition': definition})
 
-    parseFunctionDefinition(symbols_map, excluded, call_tree, root = root_directory)
+    parseFunctionDefinition(symbols_map, excluded, call_tree, 0, call_level, root = root_directory)
+
     level_pointer = "--"
     for symbol in call_tree:
         current_level_pointer = level_pointer * symbol['level']
@@ -138,6 +134,7 @@ def main():
     option_parser.add_option('-s', '--source-dir', dest="source_dir", help="Root directory with source code")
     option_parser.add_option('-S', '--symbol', dest="symbol", help="Symbol (function name) which is should be start of call tree")
     option_parser.add_option('-e', '--exclude', dest="excluded_symbols", help="Symbols which should be excluded")
+    option_parser.add_option('-l', '--max-level', dest="call_level", help="max call level", default = '5000')
     option_parser.add_option('-t', '--test', dest="is_run_tests", action = "store_true", default = False,
          help="Run unit tests (if this option are defined all other options will be ignored")
 
@@ -167,8 +164,18 @@ def main():
 
         print("found " + str(len(file_parser.tokens_map)) + " symbols")
 
-        excluded = options.excluded_symbols.split()
-        createCallTree(symbol, excluded, file_parser.tokens_map, root_directory = root)
+        call_level = options.call_level
+        if not call_level.isdigit():
+            option_parser.error("'call level' parameter should be digit")
+
+        call_level = int(call_level)
+
+        if options.excluded_symbols:
+            excluded = options.excluded_symbols.split()
+            createCallTree(symbol, excluded, call_level, file_parser.tokens_map, root_directory = root)
+        else:
+            createCallTree(symbol, [], call_level, file_parser.tokens_map, root_directory = root)
+
 
 
 if __name__ == '__main__':
